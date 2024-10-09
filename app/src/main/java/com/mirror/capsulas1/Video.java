@@ -34,6 +34,7 @@ public class Video extends AppCompatActivity {
     private MediaPlayer beepSound;
     private Handler handler;
     private boolean isMirrored = false;
+    private boolean isPlaying = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,21 +48,15 @@ public class Video extends AppCompatActivity {
         Button btnPlayPause = findViewById(R.id.btnPlayPause);
         ListView timesListView = findViewById(R.id.timesListView);
 
-
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, displayTimes);
         timesListView.setAdapter(adapter);
 
-
         beepSound = MediaPlayer.create(this, R.raw.beep);
-
-
         handler = new Handler();
-
 
         btnMirror.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(Video.this, "Botón espejo presionado", Toast.LENGTH_SHORT).show();
                 if (isMirrored) {
                     textureView.setScaleX(1f);
                     isMirrored = false;
@@ -71,7 +66,6 @@ public class Video extends AppCompatActivity {
                 }
             }
         });
-
 
         textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
@@ -91,7 +85,6 @@ public class Video extends AppCompatActivity {
             public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {}
         });
 
-
         btnMarkTime.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -105,23 +98,36 @@ public class Video extends AppCompatActivity {
             }
         });
 
-
         btnPlayPause.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (mediaPlayer != null) {
                     if (mediaPlayer.isPlaying()) {
                         mediaPlayer.pause();
+                        isPlaying = false;
                         btnPlayPause.setText("Reproducir");
+                        handler.removeCallbacksAndMessages(null);
                     } else {
                         mediaPlayer.start();
+                        isPlaying = true;
                         btnPlayPause.setText("Pausar");
+                        checkMarkedTimes();
                     }
                 }
             }
         });
-    }
 
+        timesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                int selectedTime = markedTimes.get(position);
+                if (mediaPlayer != null) {
+                    mediaPlayer.seekTo(selectedTime);
+                    seekBar.setProgress(selectedTime);
+                }
+            }
+        });
+    }
 
     private void checkPermissionsAndOpenVideoPicker() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
@@ -139,12 +145,10 @@ public class Video extends AppCompatActivity {
         }
     }
 
-
     private void openVideoPicker() {
         Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
         startActivityForResult(intent, 1);
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -155,7 +159,6 @@ public class Video extends AppCompatActivity {
         }
     }
 
-
     public void playVideo(Uri videoUri) {
         try {
             mediaPlayer = new MediaPlayer();
@@ -164,10 +167,8 @@ public class Video extends AppCompatActivity {
             mediaPlayer.prepare();
             mediaPlayer.start();
 
-
             seekBar.setMax(mediaPlayer.getDuration());
             updateSeekBar();
-
 
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
@@ -181,18 +182,16 @@ public class Video extends AppCompatActivity {
         }
     }
 
-
     private void updateSeekBar() {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 if (mediaPlayer != null) {
                     seekBar.setProgress(mediaPlayer.getCurrentPosition());
-                    handler.postDelayed(this, 500);
                 }
+                handler.postDelayed(this, 1000);
             }
-        }, 500);
-
+        }, 0);
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -210,29 +209,24 @@ public class Video extends AppCompatActivity {
         });
     }
 
-
     private void checkMarkedTimes() {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (mediaPlayer != null) {
+                if (mediaPlayer != null && isPlaying) {
                     int currentTime = mediaPlayer.getCurrentPosition();
 
-
                     for (int time : markedTimes) {
-                        if (Math.abs(currentTime - time) < 500) {  // Tolerancia de 500 ms
+                        if (Math.abs(currentTime - time) < 200) {
                             playBeepSound();
                             break;
                         }
                     }
                 }
-
-
-                handler.postDelayed(this, 500);
+                handler.postDelayed(this, 50);
             }
-        }, 500);
+        }, 50);
     }
-
 
     private void playBeepSound() {
         if (beepSound != null) {
@@ -240,11 +234,11 @@ public class Video extends AppCompatActivity {
         }
     }
 
-
     private String formatTime(int timeMs) {
+        int milliseconds = (timeMs % 1000) / 10;
         int seconds = (timeMs / 1000) % 60;
         int minutes = (timeMs / 1000) / 60;
-        return String.format("%02d:%02d", minutes, seconds);
+        return String.format("%02d:%02d.%02d", minutes, seconds, milliseconds);
     }
 
     @Override
@@ -256,9 +250,7 @@ public class Video extends AppCompatActivity {
             beepSound = null;
         }
 
-
         handler.removeCallbacksAndMessages(null);
-
 
         if (mediaPlayer != null) {
             mediaPlayer.release();
