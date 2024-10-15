@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -256,5 +257,12 @@ public class Video extends AppCompatActivity {
             mediaPlayer.release();
             mediaPlayer = null;
         }
+    }
+
+
+
+    public void usuario_perfil(View v) {
+        Intent intent = new Intent(this, usuario_perfil.class);
+        startActivity(intent);
     }
 }

@@ -10,15 +10,15 @@
     <!-- FrameLayout para el TextureView -->
     <FrameLayout
         android:id="@+id/videoFrame"
-        android:layout_width="339dp"
-        android:layout_height="240dp"
-        android:layout_marginStart="4dp"
-        android:layout_marginTop="60dp"
-        android:layout_marginEnd="4dp"
-        android:layout_marginBottom="53dp"
+        android:layout_width="467dp"
+        android:layout_height="221dp"
+        android:layout_marginStart="55dp"
+        android:layout_marginTop="62dp"
+        android:layout_marginEnd="44dp"
+        android:layout_marginBottom="44dp"
         app:layout_constraintBottom_toTopOf="@+id/btnMarkTime"
-        app:layout_constraintEnd_toEndOf="@+id/seekBar"
-        app:layout_constraintStart_toStartOf="@+id/btnMirror"
+        app:layout_constraintEnd_toStartOf="@+id/timesListView"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextureView
@@ -28,16 +28,13 @@
 
     </FrameLayout>
 
-    <!-- Botón para marcar tiempo -->
-
-    <!-- Lista de tiempos marcados -->
 
     <Button
         android:id="@+id/btnMarkTime"
-        android:layout_width="140dp"
-        android:layout_height="61dp"
-        android:layout_marginEnd="172dp"
-        android:layout_marginBottom="16dp"
+        android:layout_width="148dp"
+        android:layout_height="46dp"
+        android:layout_marginEnd="208dp"
+        android:layout_marginBottom="30dp"
         android:text="Marcar Tiempo"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -46,26 +43,27 @@
 
     <ListView
         android:id="@+id/timesListView"
-        android:layout_width="147dp"
-        android:layout_height="224dp"
-        android:layout_marginTop="51dp"
-        android:layout_marginEnd="15dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="62dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="125dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/seekBar"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintStart_toEndOf="@+id/videoFrame"
+        app:layout_constraintTop_toBottomOf="@+id/guardar" />
 
     <Button
         android:id="@+id/btnMirror"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginStart="40dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="452dp"
-        android:layout_marginBottom="4dp"
+        android:layout_marginStart="55dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="434dp"
         android:text="Espejo"
         app:layout_constraintBottom_toTopOf="@+id/videoFrame"
-        app:layout_constraintEnd_toStartOf="@+id/timesListView"
+        app:layout_constraintEnd_toStartOf="@+id/guardar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -73,25 +71,36 @@
         android:id="@+id/seekBar"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="48dp"
-        android:layout_marginEnd="24dp"
-        android:layout_marginBottom="11dp"
         app:layout_constraintBottom_toTopOf="@+id/btnPlayPause"
-        app:layout_constraintEnd_toStartOf="@+id/timesListView"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/btnMarkTime"
+        app:layout_constraintStart_toStartOf="@+id/btnPlayPause"
         app:layout_constraintTop_toBottomOf="@+id/videoFrame" />
 
     <Button
         android:id="@+id/btnPlayPause"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="48dp"
-        android:layout_marginEnd="287dp"
-        android:layout_marginBottom="24dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="55dp"
+        android:layout_marginEnd="187dp"
+        android:layout_marginBottom="30dp"
         android:text="Reproducir"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/btnMarkTime"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/seekBar" />
+
+    <Button
+        android:id="@+id/guardar"
+        android:layout_width="100dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="17dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="4dp"
+        android:onClick="usuario_perfil"
+        android:text="Guardar"
+        app:layout_constraintBottom_toTopOf="@+id/timesListView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/btnMirror"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
