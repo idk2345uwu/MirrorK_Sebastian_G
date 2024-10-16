@@ -2,12 +2,14 @@ package com.mirror.capsulas1;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
@@ -21,6 +23,9 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.util.ArrayList;
 
@@ -36,6 +41,7 @@ public class Video extends AppCompatActivity {
     private Handler handler;
     private boolean isMirrored = false;
     private boolean isPlaying = false;
+    private Uri selectedVideoUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +53,7 @@ public class Video extends AppCompatActivity {
         Button btnMarkTime = findViewById(R.id.btnMarkTime);
         Button btnMirror = findViewById(R.id.btnMirror);
         Button btnPlayPause = findViewById(R.id.btnPlayPause);
+        Button btnGuardar = findViewById(R.id.guardar);
         ListView timesListView = findViewById(R.id.timesListView);
 
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, displayTimes);
@@ -54,6 +61,16 @@ public class Video extends AppCompatActivity {
 
         beepSound = MediaPlayer.create(this, R.raw.beep);
         handler = new Handler();
+
+        Intent intent = getIntent();
+        String videoUriString = intent.getStringExtra("video_uri");
+        String markedTimesJson = intent.getStringExtra("marked_times");
+
+        if (videoUriString != null && markedTimesJson != null) {
+            selectedVideoUri = Uri.parse(videoUriString);
+            loadMarkedTimes(markedTimesJson);
+            playVideo(selectedVideoUri);
+        }
 
         btnMirror.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -94,6 +111,7 @@ public class Video extends AppCompatActivity {
                     markedTimes.add(currentTime);
                     displayTimes.add(formatTime(currentTime));
                     adapter.notifyDataSetChanged();
+                    saveMarkedTimes();
                     Toast.makeText(Video.this, "Tiempo marcado: " + formatTime(currentTime), Toast.LENGTH_SHORT).show();
                 }
             }
@@ -118,6 +136,13 @@ public class Video extends AppCompatActivity {
             }
         });
 
+        btnGuardar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                saveMarkedTimes();
+            }
+        });
+
         timesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -128,7 +153,10 @@ public class Video extends AppCompatActivity {
                 }
             }
         });
+
+        loadMarkedTimes(markedTimesJson);
     }
+
 
     private void checkPermissionsAndOpenVideoPicker() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
@@ -156,6 +184,7 @@ public class Video extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 1 && resultCode == RESULT_OK && data != null) {
             Uri selectedVideo = data.getData();
+            selectedVideoUri = selectedVideo;
             playVideo(selectedVideo);
         }
     }
@@ -242,6 +271,48 @@ public class Video extends AppCompatActivity {
         return String.format("%02d:%02d.%02d", minutes, seconds, milliseconds);
     }
 
+    private void saveMarkedTimes() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        JSONArray jsonArray = new JSONArray();
+        for (int time : markedTimes) {
+            jsonArray.put(time);
+        }
+
+        editor.putString("marked_times", jsonArray.toString());
+        if (selectedVideoUri != null) {
+            editor.putString("video_uri", selectedVideoUri.toString());
+        }
+        editor.apply();
+
+        Toast.makeText(this, "Tiempos marcados y video guardados", Toast.LENGTH_SHORT).show();
+    }
+
+    private void loadMarkedTimes(String markedTimesJson) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String json = sharedPreferences.getString("marked_times", null);
+
+        markedTimes.clear();
+        displayTimes.clear();
+
+        if (json != null) {
+            try {
+                JSONArray jsonArray = new JSONArray(json);
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    int time = jsonArray.getInt(i);
+                    markedTimes.add(time);
+                    displayTimes.add(formatTime(time));
+                }
+                adapter.notifyDataSetChanged();
+
+                Toast.makeText(this, "Tiempos marcados cargados", Toast.LENGTH_SHORT).show();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -257,12 +328,5 @@ public class Video extends AppCompatActivity {
             mediaPlayer.release();
             mediaPlayer = null;
         }
-    }
-
-
-
-    public void usuario_perfil(View v) {
-        Intent intent = new Intent(this, usuario_perfil.class);
-        startActivity(intent);
     }
 }
