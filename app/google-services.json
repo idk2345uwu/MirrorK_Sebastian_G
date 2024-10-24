@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "524193901315",
+    "project_id": "mirrork-4f6e4",
+    "storage_bucket": "mirrork-4f6e4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:524193901315:android:b615a063247d626c56d736",
+        "android_client_info": {
+          "package_name": "com.mirror.capsulas1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgHKTU_h6koyrg99irI3Ix-LlhJ7VNIdE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
