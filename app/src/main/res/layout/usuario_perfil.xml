@@ -20,7 +20,7 @@
         android:orientation="horizontal">
 
         <ImageView
-            android:id="@+id/imageView"
+            android:id="@+id/imagenperfil"
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:layout_gravity="center_vertical"
@@ -34,7 +34,7 @@
             android:paddingStart="16dp">
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/nombre_perrfil_id"
+                android:id="@+id/nombre_perfil_id"
                 android:layout_width="match_parent"
                 android:layout_height="24dp"
                 android:hint="Nombre de Perfil" />
@@ -47,6 +47,12 @@
                 android:hint="Descripción del Perfil" />
         </LinearLayout>
     </LinearLayout>
+
+    <Button
+        android:id="@+id/seleccionar_imagen_id"
+        android:layout_width="108dp"
+        android:layout_height="wrap_content"
+        android:text="Selecionar Img" />
 
     <TextView
         android:id="@+id/textView"
@@ -119,6 +125,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Videos Guardados"
         android:textSize="18sp" />
+
+    <Button
+        android:id="@+id/guardar_perfil_id"
+        android:layout_width="191dp"
+        android:layout_height="wrap_content"
+        android:text="Guardar Perfil" />
 </LinearLayout>

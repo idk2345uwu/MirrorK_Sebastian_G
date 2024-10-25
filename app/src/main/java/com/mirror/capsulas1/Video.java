@@ -1,6 +1,8 @@
 package com.mirror.capsulas1;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -10,31 +12,46 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.text.InputType;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
+
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.SetOptions;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class Video extends AppCompatActivity {
 
     private TextureView textureView;
     private MediaPlayer mediaPlayer;
     private SeekBar seekBar;
-    private ArrayList<Integer> markedTimes = new ArrayList<>();
+    private Map<Integer, String> markedTimes = new HashMap<>();
     private ArrayAdapter<String> adapter;
     private ArrayList<String> displayTimes = new ArrayList<>();
     private MediaPlayer beepSound;
@@ -108,11 +125,33 @@ public class Video extends AppCompatActivity {
             public void onClick(View v) {
                 if (mediaPlayer != null) {
                     int currentTime = mediaPlayer.getCurrentPosition();
-                    markedTimes.add(currentTime);
-                    displayTimes.add(formatTime(currentTime));
-                    adapter.notifyDataSetChanged();
-                    saveMarkedTimes();
-                    Toast.makeText(Video.this, "Tiempo marcado: " + formatTime(currentTime), Toast.LENGTH_SHORT).show();
+                    AlertDialog.Builder builder = new AlertDialog.Builder(Video.this);
+                    builder.setTitle("Describe el evento");
+
+                    final EditText input = new EditText(Video.this);
+                    input.setInputType(InputType.TYPE_CLASS_TEXT);
+                    builder.setView(input);
+
+                    builder.setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            String description = input.getText().toString();
+                            markedTimes.put(currentTime, description);
+                            displayTimes.add(description);
+                            adapter.notifyDataSetChanged();
+                            saveMarkedTimes();
+                            Toast.makeText(Video.this, "Tiempo marcado: " + description, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                    builder.setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                        }
+                    });
+
+                    builder.show();
                 }
             }
         });
@@ -146,7 +185,7 @@ public class Video extends AppCompatActivity {
         timesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                int selectedTime = markedTimes.get(position);
+                Integer selectedTime = (Integer) markedTimes.keySet().toArray()[position];
                 if (mediaPlayer != null) {
                     mediaPlayer.seekTo(selectedTime);
                     seekBar.setProgress(selectedTime);
@@ -156,7 +195,6 @@ public class Video extends AppCompatActivity {
 
         loadMarkedTimes(markedTimesJson);
     }
-
 
     private void checkPermissionsAndOpenVideoPicker() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
@@ -246,8 +284,8 @@ public class Video extends AppCompatActivity {
                 if (mediaPlayer != null && isPlaying) {
                     int currentTime = mediaPlayer.getCurrentPosition();
 
-                    for (int time : markedTimes) {
-                        if (Math.abs(currentTime - time) < 200) {
+                    for (Map.Entry<Integer, String> entry : markedTimes.entrySet()) {
+                        if (Math.abs(currentTime - entry.getKey()) < 200) {
                             playBeepSound();
                             break;
                         }
@@ -276,37 +314,34 @@ public class Video extends AppCompatActivity {
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
         JSONArray jsonArray = new JSONArray();
-        for (int time : markedTimes) {
-            jsonArray.put(time);
+        for (Map.Entry<Integer, String> entry : markedTimes.entrySet()) {
+            JSONObject jsonObject = new JSONObject();
+            try {
+                jsonObject.put("time", entry.getKey());
+                jsonObject.put("description", entry.getValue());
+                jsonArray.put(jsonObject);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
-
         editor.putString("marked_times", jsonArray.toString());
-        if (selectedVideoUri != null) {
-            editor.putString("video_uri", selectedVideoUri.toString());
-        }
         editor.apply();
 
-        Toast.makeText(this, "Tiempos marcados y video guardados", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Tiempos guardados", Toast.LENGTH_SHORT).show();
     }
 
     private void loadMarkedTimes(String markedTimesJson) {
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        String json = sharedPreferences.getString("marked_times", null);
-
-        markedTimes.clear();
-        displayTimes.clear();
-
-        if (json != null) {
+        if (markedTimesJson != null) {
             try {
-                JSONArray jsonArray = new JSONArray(json);
+                JSONArray jsonArray = new JSONArray(markedTimesJson);
                 for (int i = 0; i < jsonArray.length(); i++) {
-                    int time = jsonArray.getInt(i);
-                    markedTimes.add(time);
-                    displayTimes.add(formatTime(time));
+                    JSONObject jsonObject = jsonArray.getJSONObject(i);
+                    int time = jsonObject.getInt("time");
+                    String description = jsonObject.getString("description");
+                    markedTimes.put(time, description);
+                    displayTimes.add(description);
                 }
                 adapter.notifyDataSetChanged();
-
-                Toast.makeText(this, "Tiempos marcados cargados", Toast.LENGTH_SHORT).show();
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -316,17 +351,14 @@ public class Video extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
-        if (beepSound != null) {
-            beepSound.release();
-            beepSound = null;
-        }
-
-        handler.removeCallbacksAndMessages(null);
-
         if (mediaPlayer != null) {
             mediaPlayer.release();
             mediaPlayer = null;
         }
+        if (beepSound != null) {
+            beepSound.release();
+            beepSound = null;
+        }
+        handler.removeCallbacksAndMessages(null);
     }
 }
